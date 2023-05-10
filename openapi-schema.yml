@@ -1,0 +1,230 @@
+openapi: "3.0.0"
+info:
+  title: Friends API
+  version: "1.0.0"
+  description: API for managing friends and friend requests
+paths:
+  /registration/:
+    post:
+      summary: Create a new user account
+      operationId: registration_view
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSerializer'
+      responses:
+        '201':
+          description: User account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSerializer'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: array
+                    items:
+                      type: string
+                  password:
+                    type: array
+                    items:
+                      type: string
+  /friendship/{request_id}/accept/:
+    post:
+      summary: Accept a friend request
+      operationId: accept_friend_request_view
+      parameters:
+        - name: request_id
+          in: path
+          description: ID of the friend request to accept
+          required: true
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Friendship created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendshipSerializer'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /friendship/{request_id}/reject/:
+    post:
+      summary: Reject a friend request
+      operationId: reject_friend_request_view
+      parameters:
+        - name: request_id
+          in: path
+          description: ID of the friend request to reject
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Friend request rejected successfully
+  /friend/{username}/request/:
+    post:
+      summary: Send a friend request
+      operationId: send_friend_request_view
+      parameters:
+        - name: username
+          in: path
+          description: Username of the user to send a friend request to
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Friend request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendRequestSerializer'
+        '400':
+          description: Invalid input data or friend request already sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /friend/{username}/status/:
+    get:
+      summary: Get friend status with another user
+      operationId: friend_status_view
+      parameters:
+        - name: username
+          in: path
+          description: Username of the user to check friend status with
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Friend status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendStatusSerializer'
+  /friend/{username}/remove/:
+    delete:
+      summary: Remove a friend
+      operationId: remove_friend_view
+      parameters:
+        - name: username
+          in: path
+          description: Username of the user to remove from friends
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Friend removed successfully
+        '404':
+          description: Friend not found
+  /friend/waiting/:
+    get:
+      summary: Get a list of incoming and outgoing friend requests
+      operationId: friend_requests_view
+      responses:
+        '200':
+          description: Friend requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sent:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FriendRequestSerializer'
+                  received:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FriendRequestSerializer'
+  /friend/:
+    get:
+      summary: Get a list of your friends
+      operationId: friends_view
+      responses:
+        '200':
+          description: Friends retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSerializer'
+
+components:
+  schemas:
+    UserSerializer:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The username for the new account
+        password:
+          type: string
+          format: password
+          description: The password for the new account
+      required:
+        - username
+        - password
+
+    FriendRequestSerializer:
+      type: object
+      properties:
+        from_user:
+          $ref: '#/components/schemas/UserSerializer'
+        to_user:
+          $ref: '#/components/schemas/UserSerializer'
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - from_user
+        - to_user
+        - created_at
+
+    FriendshipSerializer:
+      type: object
+      properties:
+        user1:
+          $ref: '#/components/schemas/UserSerializer'
+        user2:
+          $ref: '#/components/schemas/UserSerializer'
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - user1
+        - user2
+        - created_at
+
+    FriendStatusSerializer:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - FRIENDS
+            - OUTGOING_REQUEST
+            - INCOMING_REQUEST
+            - NO_REQUEST
